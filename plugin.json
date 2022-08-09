@@ -1,0 +1,15 @@
+{
+  "description": "<p>EZTV, your one stop source for all your favorite TV shows. New UI for a better experience . SAFE!",
+  "author": "Wolfy",
+  "homepage": "https://github.com/LamineMbn/movian-plugin-eztv-wolfy",
+  "title": "Hackflix",
+  "synopsis": "EZTV + TMDB - Stream TV Shows",
+  "version": "1.0.0",
+  "file": "eztv.js",
+  "showtimeVersion": "4.10",
+  "type": "ecmascript",
+  "id": "eztvapi",
+  "icon": "logo.png",
+  "category": "video",
+  "apiversion": 2
+}
