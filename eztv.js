@@ -83,6 +83,23 @@ function tmdbShowMetadata(show) {
     };
 }
 
+function eztvMetadata(torrent, tmdbShow) {
+    var tmdbEpisodeDetails = tmdbApi.retrieveEpisodeDetail(tmdbShow.id, torrent.season, torrent.episode)
+    return {
+        title: torrent.title,
+        icon: tmdbApi.retrieveEpisodeScreenShot(tmdbEpisodeDetails, tmdbShow),
+        vtype: 'tvseries',
+        season: {number: +torrent.season},
+        episode: {title: torrent.title, number: +torrent.episode},
+        genre: new RichText(coloredStr('S: ', orange) + coloredStr(torrent.seeds, green) +
+            coloredStr(' P: ', orange) + coloredStr(torrent.peers, red) +
+            coloredStr(' Size: ', orange) + bytesToSize(torrent.size_bytes) +
+            (torrent.imdb_id ? coloredStr('<br>IMDb ID: ', orange) + 'tt' + torrent.imdb_id : '')),
+        tagline: new RichText(coloredStr('Released: ', orange) + new Date(torrent.date_released_unix * 1000)),
+        description: new RichText(tmdbEpisodeDetails.overview)
+    };
+}
+
 function tvShowList(page) {
     var fromPage = 1;
     var tryToSearch = true;
@@ -106,49 +123,6 @@ function tvShowList(page) {
     page.loading = false;
 }
 
-function browseItems(page, query) {
-    var fromPage = 1;
-    var tryToSearch = true;
-    page.entries = 0;
-
-    function loader() {
-        if (!tryToSearch) return false;
-        var json = eztvApi.retrieveAllTorrents(fromPage)
-        page.loading = false;
-
-        for (var i in json.torrents) {
-            var torrent = json.torrents[i]
-            var torrenUrlDecoded = escape(torrent.torrent_url)
-            var itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + escape(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
-            console.log("Item Url " + itemUrl)
-            var item = page.appendItem(itemUrl, "video", {
-                title: torrent.title,
-                icon: torrent.small_screenshot ? 'https:' + torrent.small_screenshot : 'https://ezimg.ch/s/1/9/image-unavailable.jpg',
-                vtype: 'tvseries',
-                season: {number: +torrent.season},
-                episode: {title: torrent.title, number: +torrent.episode},
-                genre: new RichText(coloredStr('S: ', orange) + coloredStr(torrent.seeds, green) +
-                    coloredStr(' P: ', orange) + coloredStr(torrent.peers, red) +
-                    coloredStr(' Size: ', orange) + bytesToSize(torrent.size_bytes) +
-                    (torrent.imdb_id ? coloredStr('<br>IMDb ID: ', orange) + 'tt' + torrent.imdb_id : '')),
-                tagline: new RichText(coloredStr('Released: ', orange) + new Date(torrent.date_released_unix * 1000))
-            });
-            page.entries++;
-            if (service.enableMetadata) {
-                item.bindVideoMetadata({
-                    imdb: 'tt' + torrent.imdb_id
-                });
-            }
-        }
-        fromPage++;
-        return true;
-    }
-
-    loader();
-    page.paginator = loader;
-    page.loading = false;
-}
-
 function browseShowEpisodes(page, tmdbShow) {
     var imdbId = tmdbShow.external_ids.imdb_id
 
@@ -160,30 +134,31 @@ function browseShowEpisodes(page, tmdbShow) {
         if (!tryToSearch) return false;
         var torrents = eztvApi.searchTorrentByImdbId(imdbId, fromPage, {resolutions: ["720","1080"], minSeeds: 5})
         page.loading = false;
-        for (var i in torrents) {
-
-            var torrent = torrents[i]
-            var torrenUrlDecoded = decodeURI(torrent.torrent_url)
-            var itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + decodeURI(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
-            var episodeDetails = tmdbApi.retrieveEpisodeDetail(tmdbShow.id, torrent.season, torrent.episode)
-
-            var item = page.appendItem(itemUrl, "video", {
-                title: torrent.title,
-                icon: tmdbApi.retrieveEpisodeScreenShot(episodeDetails, tmdbShow),
-                vtype: 'tvseries',
-                season: {number: +torrent.season},
-                episode: {title: torrent.title, number: +torrent.episode},
-                genre: new RichText(coloredStr('S: ', orange) + coloredStr(torrent.seeds, green) +
-                    coloredStr(' P: ', orange) + coloredStr(torrent.peers, red) +
-                    coloredStr(' Size: ', orange) + bytesToSize(torrent.size_bytes) +
-                    (torrent.imdb_id ? coloredStr('<br>IMDb ID: ', orange) + 'tt' + torrent.imdb_id : '')),
-                tagline: new RichText(coloredStr('Released: ', orange) + new Date(torrent.date_released_unix * 1000)),
-                description: new RichText(episodeDetails.overview)
+        var torrentBySeasonAndEpisodes = torrents.reduce(function (groupedTorrents, torrent) {
+            var key = "S" + torrent.season + " E" + torrent.episode
+            groupedTorrents[key] = groupedTorrents[key] || [];
+            groupedTorrents[key].push(torrent);
+            return groupedTorrents;
+        }, Object.create(null));
+       
+        for (var key in torrentBySeasonAndEpisodes) {
+            var episodeTorrents = torrentBySeasonAndEpisodes[key]
+            page.appendItem(plugin.id + ":episodeDetail:" + key + ":" + JSON.stringify(episodeTorrents) + ":" + JSON.stringify(tmdbShow), "directory", {
+                title: key
             });
-            page.entries++;
-
-
         }
+        // for (var i in torrents) {
+        //
+        //     var torrent = torrents[i]
+        //     var torrenUrlDecoded = decodeURI(torrent.torrent_url)
+        //     var itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + decodeURI(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
+        //    
+        //
+        //     page.appendItem(itemUrl, "video", eztvMetadata(torrent, tmdbShow));
+        //     page.entries++;
+        //
+        //
+        // }
         fromPage++;
         return true;
     }
@@ -201,39 +176,6 @@ function searchOnTmdb(page, query) {
         var show = response.results[i]
         page.appendItem(plugin.id + ':detail:' + show.id, "directory", tmdbShowMetadata(show));
         page.entries++;
-    }
-    page.loading = false;
-}
-
-function search(page, query) {
-    setPageHeader(page, plugin.title);
-    page.entries = 0;
-    var response = eztvApi.searchTorrentByQuery(query)
-    // 1-link to the show, 2-show's title, 3-episode url, 4-episode's title, 5-magnet&torrent urls, 6-size, 7-released, 8-seeds
-    var re = /<tr name="hover"[\s\S]*?<a href="([\s\S]*?)"[\s\S]*?alt="Info" title="([\s\S]*?)"[\s\S]*?<a href="([\s\S]*?)"[\s\S]*?class="epinfo">([\s\S]*?)<\/a>[\s\S]*?<td align="center"([\s\S]*?)<\/td>[\s\S]*?class="forum_thread_post">([\s\S]*?)<\/td>[\s\S]*?class="forum_thread_post">([\s\S]*?)<\/td>[\s\S]*?class="forum_thread_post">[\s\S]*?">([\s\S]*?)</g;
-    var match = re.exec(response);
-
-    while (match) {
-        // 0 1    2   3
-        // /shows/id/name-of-the-show
-        var poster = match[1].split("/")
-        var imageUrl = service.eztvBaseUrl + "/ezimg/thumbs/" + poster[3] + "-" + poster[2] + ".jpg"
-        var re2 = /<a href="([\s\S]*?)"/g;
-        var urls = re2.exec(match[5]);
-        var lnk = '';
-        while (urls) { // we prefer .torrent 
-            lnk = urls[1];
-            urls = re2.exec(match[5])
-        }
-        var item = page.appendItem('torrent:video:' + lnk, "video", {
-            title: new RichText(match[4]),
-            icon: imageUrl,
-            genre: new RichText((match[8] ? coloredStr('Seeds: ', orange) + coloredStr(match[8], green) + ' ' : '') +
-                coloredStr('Size: ', orange) + match[6]),
-            tagline: new RichText(coloredStr('<br>Released: ', orange) + match[7])
-        });
-        page.entries++;
-        match = re.exec(response);
     }
     page.loading = false;
 }
@@ -286,6 +228,24 @@ new page.Route(plugin.id + ":detail:(.*)", function (page, id) {
     
 });
 
+new page.Route(plugin.id + ":episodeDetail:(.*):(.*):(.*)", function (page, episode, torrents, tmdbShow) {
+    setPageHeader(page, episode);
+
+    for (var i in torrents) {
+
+        var torrent = torrents[i]
+        var torrenUrlDecoded = decodeURI(torrent.torrent_url)
+        var itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + decodeURI(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
+
+
+        page.appendItem(itemUrl, "video", eztvMetadata(torrent, tmdbShow));
+        page.entries++;
+
+
+    }
+
+});
+
 new page.Route(plugin.id + ":search:(.*)", function (page, query) {
     searchOnTmdb(page, query);
 });
@@ -293,3 +253,80 @@ new page.Route(plugin.id + ":search:(.*)", function (page, query) {
 page.Searcher(plugin.id, logo, function (page, query) {
     searchOnTmdb(page, query);
 });
+
+
+// LEGACY
+function search(page, query) {
+    setPageHeader(page, plugin.title);
+    page.entries = 0;
+    var response = eztvApi.searchTorrentByQuery(query)
+    // 1-link to the show, 2-show's title, 3-episode url, 4-episode's title, 5-magnet&torrent urls, 6-size, 7-released, 8-seeds
+    var re = /<tr name="hover"[\s\S]*?<a href="([\s\S]*?)"[\s\S]*?alt="Info" title="([\s\S]*?)"[\s\S]*?<a href="([\s\S]*?)"[\s\S]*?class="epinfo">([\s\S]*?)<\/a>[\s\S]*?<td align="center"([\s\S]*?)<\/td>[\s\S]*?class="forum_thread_post">([\s\S]*?)<\/td>[\s\S]*?class="forum_thread_post">([\s\S]*?)<\/td>[\s\S]*?class="forum_thread_post">[\s\S]*?">([\s\S]*?)</g;
+    var match = re.exec(response);
+
+    while (match) {
+        // 0 1    2   3
+        // /shows/id/name-of-the-show
+        var poster = match[1].split("/")
+        var imageUrl = service.eztvBaseUrl + "/ezimg/thumbs/" + poster[3] + "-" + poster[2] + ".jpg"
+        var re2 = /<a href="([\s\S]*?)"/g;
+        var urls = re2.exec(match[5]);
+        var lnk = '';
+        while (urls) { // we prefer .torrent 
+            lnk = urls[1];
+            urls = re2.exec(match[5])
+        }
+        var item = page.appendItem('torrent:video:' + lnk, "video", {
+            title: new RichText(match[4]),
+            icon: imageUrl,
+            genre: new RichText((match[8] ? coloredStr('Seeds: ', orange) + coloredStr(match[8], green) + ' ' : '') +
+                coloredStr('Size: ', orange) + match[6]),
+            tagline: new RichText(coloredStr('<br>Released: ', orange) + match[7])
+        });
+        page.entries++;
+        match = re.exec(response);
+    }
+    page.loading = false;
+}
+
+function browseItems(page, query) {
+    var fromPage = 1;
+    var tryToSearch = true;
+    page.entries = 0;
+
+    function loader() {
+        if (!tryToSearch) return false;
+        var json = eztvApi.retrieveAllTorrents(fromPage)
+        page.loading = false;
+
+        for (var i in json.torrents) {
+            var torrent = json.torrents[i]
+            var torrenUrlDecoded = escape(torrent.torrent_url)
+            var itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + escape(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
+            var item = page.appendItem(itemUrl, "video", {
+                title: torrent.title,
+                icon: torrent.small_screenshot ? 'https:' + torrent.small_screenshot : 'https://ezimg.ch/s/1/9/image-unavailable.jpg',
+                vtype: 'tvseries',
+                season: {number: +torrent.season},
+                episode: {title: torrent.title, number: +torrent.episode},
+                genre: new RichText(coloredStr('S: ', orange) + coloredStr(torrent.seeds, green) +
+                    coloredStr(' P: ', orange) + coloredStr(torrent.peers, red) +
+                    coloredStr(' Size: ', orange) + bytesToSize(torrent.size_bytes) +
+                    (torrent.imdb_id ? coloredStr('<br>IMDb ID: ', orange) + 'tt' + torrent.imdb_id : '')),
+                tagline: new RichText(coloredStr('Released: ', orange) + new Date(torrent.date_released_unix * 1000))
+            });
+            page.entries++;
+            if (service.enableMetadata) {
+                item.bindVideoMetadata({
+                    imdb: 'tt' + torrent.imdb_id
+                });
+            }
+        }
+        fromPage++;
+        return true;
+    }
+
+    loader();
+    page.paginator = loader;
+    page.loading = false;
+}

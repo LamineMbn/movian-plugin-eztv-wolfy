@@ -53,7 +53,6 @@ exports.showExists = function (imdbId) {
     var url = retrieveSearchTorrentsByImdbIdUrl(imdbId, 1,  1)
     var response = api.callService(url)
     var torrents = JSON.parse(response).torrents
-    console.log("Torrents" + torrents)
     return torrents != null
 }
 
