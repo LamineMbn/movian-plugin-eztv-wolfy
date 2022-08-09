@@ -6,9 +6,9 @@
   "synopsis": "EZTV + TMDB - Stream TV Shows",
   "version": "1.0.0",
   "file": "eztv.js",
-  "showtimeVersion": "4.10",
+  "showtimeVersion": "5.0.0",
   "type": "ecmascript",
-  "id": "eztvapi",
+  "id": "eztvapiv2",
   "icon": "logo.png",
   "category": "video",
   "apiversion": 2
