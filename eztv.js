@@ -22,7 +22,7 @@ var settings = require('movian/settings');
 var tmdbApi = require('tmdb-api');
 var eztvApi = require('eztv-api');
 var plugin = JSON.parse(Plugin.manifest);
-var logo = Plugin.path + "logo-2.png";
+var logo = Plugin.path + "logo.png";
 
 RichText = function (x) {
     this.str = x.toString();
