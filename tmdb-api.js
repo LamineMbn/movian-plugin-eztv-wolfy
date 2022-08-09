@@ -1,7 +1,7 @@
 var service = require('movian/service');
 var api = require('common-api');
 
-var TMDB_POSTER_BASE_URL = "http://image.tmdb.org/t/p/w300"
+var TMDB_IMAGE_BASE_URL = "http://image.tmdb.org/t/p/w300"
 var TMDB_TV_SHOWS_ENDPOINT_PREFIX = "/tv"
 var TMDB_POPULAR_SHOWS_ENDPOINT = TMDB_TV_SHOWS_ENDPOINT_PREFIX + "/popular"
 var TMDB_SEARCH_SHOWS_ENDPOINT = "/search/tv"
@@ -28,6 +28,17 @@ function retrieveSearchShowUrl(query) {
     return searchShowUrl;
 }
 
+function retrieveEpisodeDetailUrl(tmdbId, seasonNumber, episodeNumber) {
+    var episodeDetailUrl = service.tmdbBaseUrl + TMDB_TV_SHOWS_ENDPOINT_PREFIX;
+    episodeDetailUrl = episodeDetailUrl.concat("/", tmdbId.toString());
+    episodeDetailUrl = episodeDetailUrl.concat("/", "season");
+    episodeDetailUrl = episodeDetailUrl.concat("/", seasonNumber.toString());
+    episodeDetailUrl = episodeDetailUrl.concat("/", "episode");
+    episodeDetailUrl = episodeDetailUrl.concat("/", episodeNumber.toString());
+    episodeDetailUrl = episodeDetailUrl.concat("?", "api_key", "=", service.tmdbApiKey);
+    return episodeDetailUrl;
+}
+
 exports.retrievePopularShows = function (fromPage){
     var url = retrievePopularShowsUrl(fromPage)
     var response = api.callService(url)
@@ -35,7 +46,11 @@ exports.retrievePopularShows = function (fromPage){
 }
 
 exports.retrievePoster = function (show) {
-    return show.backdrop_path ? TMDB_POSTER_BASE_URL + show.backdrop_path : 'https://ezimg.ch/s/1/9/image-unavailable.jpg'
+    return show.backdrop_path ? TMDB_IMAGE_BASE_URL + show.backdrop_path : 'https://ezimg.ch/s/1/9/image-unavailable.jpg'
+}
+
+exports.retrieveEpisodeScreenShot = function (episode, show) {
+    return episode.still_path ? TMDB_IMAGE_BASE_URL + episode.still_path : this.retrievePoster(show)
 }
 
 exports.retrieveShowById = function(id) {
@@ -47,5 +62,14 @@ exports.retrieveShowById = function(id) {
 exports.searchShow = function(query) {
     var url = retrieveSearchShowUrl(query)
     var response = api.callService(url)
+    return JSON.parse(response)
+}
+
+exports.retrieveEpisodeDetail = function(tmbdId, seasonNumber, episodeNumber) {
+    var url = retrieveEpisodeDetailUrl(tmbdId, seasonNumber, episodeNumber)
+    var response = JSON.stringify("{}")
+    if(seasonNumber > 0 && episodeNumber > 0){
+        response = api.callService(url)
+    }
     return JSON.parse(response)
 }

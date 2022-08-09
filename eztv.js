@@ -25,7 +25,7 @@ var plugin = JSON.parse(Plugin.manifest);
 var logo = Plugin.path + "logo.png";
 
 RichText = function (x) {
-    this.str = x.toString();
+    this.str = x ? x.toString() : "";
 }
 
 RichText.prototype.toRichString = function (x) {
@@ -165,10 +165,11 @@ function browseShowEpisodes(page, tmdbShow) {
             var torrent = torrents[i]
             var torrenUrlDecoded = decodeURI(torrent.torrent_url)
             var itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + decodeURI(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
+            var episodeDetails = tmdbApi.retrieveEpisodeDetail(tmdbShow.id, torrent.season, torrent.episode)
 
             var item = page.appendItem(itemUrl, "video", {
                 title: torrent.title,
-                icon: torrent.small_screenshot ? 'https:' + torrent.small_screenshot : tmdbApi.retrievePoster(tmdbShow),
+                icon: tmdbApi.retrieveEpisodeScreenShot(episodeDetails, tmdbShow),
                 vtype: 'tvseries',
                 season: {number: +torrent.season},
                 episode: {title: torrent.title, number: +torrent.episode},
@@ -176,7 +177,8 @@ function browseShowEpisodes(page, tmdbShow) {
                     coloredStr(' P: ', orange) + coloredStr(torrent.peers, red) +
                     coloredStr(' Size: ', orange) + bytesToSize(torrent.size_bytes) +
                     (torrent.imdb_id ? coloredStr('<br>IMDb ID: ', orange) + 'tt' + torrent.imdb_id : '')),
-                tagline: new RichText(coloredStr('Released: ', orange) + new Date(torrent.date_released_unix * 1000))
+                tagline: new RichText(coloredStr('Released: ', orange) + new Date(torrent.date_released_unix * 1000)),
+                description: new RichText(episodeDetails.overview)
             });
             page.entries++;
 
