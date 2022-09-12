@@ -171,8 +171,8 @@ function browseShowEpisodes(page, tmdbShow) {
                 title: torrent.title,
                 icon: tmdbApi.retrieveEpisodeScreenShot(episodeDetails, tmdbShow),
                 vtype: 'tvseries',
-                season: {number: +torrent.season},
-                episode: {title: torrent.title, number: +torrent.episode},
+                season: {number: + torrent.season},
+                episode: {title: torrent.title, number: + torrent.episode},
                 genre: new RichText(coloredStr('S: ', orange) + coloredStr(torrent.seeds, green) +
                     coloredStr(' P: ', orange) + coloredStr(torrent.peers, red) +
                     coloredStr(' Size: ', orange) + bytesToSize(torrent.size_bytes) +

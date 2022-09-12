@@ -6,32 +6,41 @@ var SEARCH_BY_NAME_ENDPOINT = "/search"
 
 function retrieveAllTorrentsUrl(page, limit) {
     var actualLimit = limit ? limit : 10;
-    var allTorrentsUrlWithParams = service.eztvBaseUrl + GET_TORRENTS_ENDPOINT;
-    allTorrentsUrlWithParams = allTorrentsUrlWithParams.concat("?", "limit", "=", actualLimit.toString());
-    allTorrentsUrlWithParams = allTorrentsUrlWithParams.concat("&", "page", "=", page.toString());
-    return allTorrentsUrlWithParams
+    return {
+        url : service.eztvBaseUrl + GET_TORRENTS_ENDPOINT,
+        args: {
+            limit: actualLimit,
+            page: page.toString()
+        }
+    }
 }
 
 function retrieveSearchTorrentsByQueryUrl(query) {
-    var searchUrlWithParams =  service.eztvBaseUrl + SEARCH_BY_NAME_ENDPOINT;
+    var searchUrlWithParams = service.eztvBaseUrl + SEARCH_BY_NAME_ENDPOINT;
     searchUrlWithParams = searchUrlWithParams.concat("/", replaceSpaceByDash(query));
-    return searchUrlWithParams
+    return {url: searchUrlWithParams}
 }
 
 function retrieveSearchTorrentsByImdbIdUrl(imdbId, page, limit) {
     var actualLimit = limit ? limit : 10;
-    var searchByImdbIdUrl =  service.eztvBaseUrl + GET_TORRENTS_ENDPOINT;
-    searchByImdbIdUrl = searchByImdbIdUrl.concat("?", "imdb_id", "=", imdbId);
-    searchByImdbIdUrl = searchByImdbIdUrl.concat("&", "page", "=", page.toString());
-    searchByImdbIdUrl = searchByImdbIdUrl.concat("&", "limit", "=", actualLimit.toString());
-    return searchByImdbIdUrl
+    var searchByImdbIdUrl = service.eztvBaseUrl + GET_TORRENTS_ENDPOINT;
+    var args = {
+        imdb_id: imdbId,
+        page: page.toString(),
+        limit: actualLimit.toString()
+    }
+    return {
+        url: searchByImdbIdUrl,
+        args: args
+    }
 }
 
 function replaceSpaceByDash(text) {
     return escape(text).replace(/%20/g, '-')
 }
-function checkResolutions(torrentTitle){
-        return torrentTitle.indexOf("720") > 0 || torrentTitle.indexOf("1080") > 0
+
+function checkResolutions(torrentTitle) {
+    return torrentTitle.indexOf("720") > 0 || torrentTitle.indexOf("1080") > 0
 }
 
 // We remove the 'tt' at the beginning 
@@ -43,29 +52,29 @@ function formatImdbId(imdbId) {
 }
 
 exports.retrieveAllTorrents = function (page) {
-    var url = retrieveAllTorrentsUrl(page)
-    var response = api.callService(url)
+    var params = retrieveAllTorrentsUrl(page)
+    var response = api.callService(params.url, params.args)
     return JSON.parse(response)
 }
 
 exports.showExists = function (imdbId) {
     imdbId = formatImdbId(imdbId);
-    var url = retrieveSearchTorrentsByImdbIdUrl(imdbId, 1,  1)
-    var response = api.callService(url)
+    var params = retrieveSearchTorrentsByImdbIdUrl(imdbId, 1, 1)
+    var response = api.callService(params.url, params.args)
     var torrents = JSON.parse(response).torrents
     console.log("Torrents" + torrents)
     return torrents != null
 }
 
 exports.searchTorrentByQuery = function (query) {
-    var url = retrieveSearchTorrentsByQueryUrl(query)
-    return api.callService(url).toString()
+    var params = retrieveSearchTorrentsByQueryUrl(query)
+    return api.callService(params.url).toString()
 }
 
 exports.searchTorrentByImdbId = function (imdbId, page, opt) {
     imdbId = formatImdbId(imdbId);
-    var url = retrieveSearchTorrentsByImdbIdUrl(imdbId, page)
-    var response = JSON.parse(api.callService(url))
+    var params = retrieveSearchTorrentsByImdbIdUrl(imdbId, page)
+    var response = JSON.parse(api.callService(params.url, params.args))
     return response.torrents ? response.torrents.filter(function (it) {
         return checkResolutions(it.title) &&
             it.seeds >= opt.minSeeds

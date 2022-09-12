@@ -7,25 +7,35 @@ var TMDB_POPULAR_SHOWS_ENDPOINT = TMDB_TV_SHOWS_ENDPOINT_PREFIX + "/popular"
 var TMDB_SEARCH_SHOWS_ENDPOINT = "/search/tv"
 
 function retrievePopularShowsUrl(page) {
-    var popularShowsUrlWithParams = service.tmdbBaseUrl + TMDB_POPULAR_SHOWS_ENDPOINT;
-    popularShowsUrlWithParams = popularShowsUrlWithParams.concat("?", "page", "=", page.toString());
-    popularShowsUrlWithParams = popularShowsUrlWithParams.concat("&", "api_key", "=", service.tmdbApiKey);
-    return popularShowsUrlWithParams
+    return {
+        url: service.tmdbBaseUrl + TMDB_POPULAR_SHOWS_ENDPOINT,
+        args: {
+            page: page.toString(),
+            api_key: service.tmdbApiKey
+        }
+    }
 }
 
 function retrieveShowByIdUrl(id) {
-    var showByIdUrl = service.tmdbBaseUrl + TMDB_TV_SHOWS_ENDPOINT_PREFIX + "/" + id;
-    showByIdUrl = showByIdUrl.concat("?", "append_to_response", "=", "external_ids");
-    showByIdUrl = showByIdUrl.concat("&", "api_key", "=", service.tmdbApiKey);
-    return showByIdUrl;
+    return {
+        url: service.tmdbBaseUrl + TMDB_TV_SHOWS_ENDPOINT_PREFIX + "/" + id,
+        args: {
+            append_to_response: "external_ids",
+            api_key: service.tmdbApiKey
+        }
+
+    }
 }
 
 function retrieveSearchShowUrl(query) {
-    var searchShowUrl = service.tmdbBaseUrl + TMDB_SEARCH_SHOWS_ENDPOINT;
-    searchShowUrl = searchShowUrl.concat("?", "query", "=", query.replace(" ", "+"));
-    searchShowUrl = searchShowUrl.concat("&", "page", "=", "1");
-    searchShowUrl = searchShowUrl.concat("&", "api_key", "=", service.tmdbApiKey);
-    return searchShowUrl;
+    return {
+        url: service.tmdbBaseUrl + TMDB_SEARCH_SHOWS_ENDPOINT,
+        args: {
+            query: query.replace(" ", "+"),
+            page: "1",
+            api_key: service.tmdbApiKey
+        }
+    }
 }
 
 function retrieveEpisodeDetailUrl(tmdbId, seasonNumber, episodeNumber) {
@@ -35,13 +45,17 @@ function retrieveEpisodeDetailUrl(tmdbId, seasonNumber, episodeNumber) {
     episodeDetailUrl = episodeDetailUrl.concat("/", seasonNumber.toString());
     episodeDetailUrl = episodeDetailUrl.concat("/", "episode");
     episodeDetailUrl = episodeDetailUrl.concat("/", episodeNumber.toString());
-    episodeDetailUrl = episodeDetailUrl.concat("?", "api_key", "=", service.tmdbApiKey);
-    return episodeDetailUrl;
+    return {
+        url: episodeDetailUrl,
+        args: {
+            api_key: service.tmdbApiKey
+        }
+    }
 }
 
 exports.retrievePopularShows = function (fromPage){
-    var url = retrievePopularShowsUrl(fromPage)
-    var response = api.callService(url)
+    var params = retrievePopularShowsUrl(fromPage)
+    var response = api.callService(params.url, params.args)
     return JSON.parse(response)
 }
 
@@ -54,22 +68,22 @@ exports.retrieveEpisodeScreenShot = function (episode, show) {
 }
 
 exports.retrieveShowById = function(id) {
-    var url = retrieveShowByIdUrl(id)
-    var response = api.callService(url)
+    var params = retrieveShowByIdUrl(id)
+    var response = api.callService(params.url, params.args)
     return JSON.parse(response) 
 }
 
 exports.searchShow = function(query) {
-    var url = retrieveSearchShowUrl(query)
-    var response = api.callService(url)
+    var params = retrieveSearchShowUrl(query)
+    var response = api.callService(params.url, params.args)
     return JSON.parse(response)
 }
 
 exports.retrieveEpisodeDetail = function(tmbdId, seasonNumber, episodeNumber) {
-    var url = retrieveEpisodeDetailUrl(tmbdId, seasonNumber, episodeNumber)
+    var params = retrieveEpisodeDetailUrl(tmbdId, seasonNumber, episodeNumber)
     var response = JSON.stringify("{}")
     if(seasonNumber > 0 && episodeNumber > 0){
-        response = api.callService(url)
+        response = api.callService(params.url, params.args)
     }
     return JSON.parse(response)
 }
