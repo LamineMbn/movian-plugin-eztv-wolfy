@@ -4,7 +4,7 @@
   "homepage": "https://github.com/LamineMbn/movian-plugin-eztv-wolfy",
   "title": "Hackflix",
   "synopsis": "EZTV + TMDB - Stream TV Shows",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "file": "eztv.js",
   "showtimeVersion": "5.0.0",
   "type": "ecmascript",

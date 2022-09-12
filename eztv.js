@@ -164,8 +164,14 @@ function browseShowEpisodes(page, tmdbShow) {
 
             var torrent = torrents[i]
             var torrenUrlDecoded = decodeURI(torrent.torrent_url)
-            var itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + decodeURI(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
             var episodeDetails = tmdbApi.retrieveEpisodeDetail(tmdbShow.id, torrent.season, torrent.episode)
+
+            var itemUrl;
+            if (torrent.episode === "0") {
+                itemUrl = "torrent:browse:" + torrent.torrent_url
+            } else {
+                itemUrl = plugin.id + ':play:' + torrenUrlDecoded + ':' + decodeURI(torrent.title) + ':' + torrent.imdb_id + ':' + torrent.season + ':' + torrent.episode
+            }
 
             var item = page.appendItem(itemUrl, "video", {
                 title: torrent.title,
