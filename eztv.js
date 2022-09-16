@@ -63,7 +63,7 @@ settings.createString('tmdbBaseURL', "TMDB base URL without '/' at the end", 'ht
     service.tmdbBaseUrl = v;
 });
 
-settings.createString('tmdbApiKey', "TMDB api key to display popular tv shows", 'a2f1432730cf9fc81a38df98e59a15ff', function (v) {
+settings.createString('tmdbApiKey', "TMDB api key to display popular tv shows", 'a0d71cffe2d6693d462af9e4f336bc06', function (v) {
     service.tmdbApiKey = v;
 });
 
