@@ -8,7 +8,7 @@
   "file": "eztv.js",
   "showtimeVersion": "5.0.0",
   "type": "ecmascript",
-  "id": "eztvapiv2",
+  "id": "hackflix",
   "icon": "logo.png",
   "category": "video",
   "apiversion": 2
