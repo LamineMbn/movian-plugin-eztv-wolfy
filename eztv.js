@@ -59,6 +59,10 @@ settings.createString('eztvBaseURL', "EZTV base URL without '/' at the end", 'ht
     service.eztvBaseUrl = v;
 });
 
+settings.createInt('minSeed', "Min seeds allowed", 5, 2, 100, 2,"seeds" , function (v) {
+    service.minSeed = v;
+});
+
 settings.createString('tmdbBaseURL', "TMDB base URL without '/' at the end", 'https://api.themoviedb.org/3', function (v) {
     service.tmdbBaseUrl = v;
 });
@@ -158,7 +162,7 @@ function browseShowEpisodes(page, tmdbShow) {
 
     function loader() {
         if (!tryToSearch) return false;
-        var torrents = eztvApi.searchTorrentByImdbId(imdbId, fromPage, {resolutions: ["720","1080"], minSeeds: 5})
+        var torrents = eztvApi.searchTorrentByImdbId(imdbId, fromPage, {resolutions: ["720","1080"], minSeeds: service.minSeed})
         page.loading = false;
         for (var i in torrents) {
 
