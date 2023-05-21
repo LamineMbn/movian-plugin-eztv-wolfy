@@ -4,14 +4,26 @@ var api = require('common-api');
 var TMDB_IMAGE_BASE_URL = "http://image.tmdb.org/t/p/w300"
 var TMDB_TV_SHOWS_ENDPOINT_PREFIX = "/tv"
 var TMDB_POPULAR_SHOWS_ENDPOINT = TMDB_TV_SHOWS_ENDPOINT_PREFIX + "/popular"
+var TMDB_DISCOVER_SHOWS_ENDPOINT = "/discover/tv"
 var TMDB_SEARCH_SHOWS_ENDPOINT = "/search/tv"
+
+// function retrievePopularShowsUrl(page) {
+//     return {
+//         url: service.tmdbBaseUrl + TMDB_POPULAR_SHOWS_ENDPOINT,
+//         args: {
+//             page: page.toString(),
+//             api_key: service.tmdbApiKey
+//         }
+//     }
+// }
 
 function retrievePopularShowsUrl(page) {
     return {
-        url: service.tmdbBaseUrl + TMDB_POPULAR_SHOWS_ENDPOINT,
+        url: service.tmdbBaseUrl + TMDB_DISCOVER_SHOWS_ENDPOINT,
         args: {
             page: page.toString(),
-            api_key: service.tmdbApiKey
+            api_key: service.tmdbApiKey,
+            sort_by: "vote_count.desc"
         }
     }
 }
